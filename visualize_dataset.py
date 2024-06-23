@@ -33,10 +33,11 @@ ds = tfds.load(dataset_name, split='train')
 ds = ds.shuffle(100)
 
 # visualize episodes
-for i, episode in enumerate(ds.take(5)):
+for i, episode in enumerate(ds.take(1)):
     images = []
     for step in episode['steps']:
-        images.append(step['observation']['image'].numpy())
+        # images.append(step['observation']['image'].numpy())
+        images.append(step['observation']['wrist_image'].numpy())
     image_strip = np.concatenate(images[::4], axis=1)
     caption = step['language_instruction'].numpy().decode() + ' (temp. downsampled 4x)'
 
@@ -49,12 +50,13 @@ for i, episode in enumerate(ds.take(5)):
 
 # visualize action and state statistics
 actions, states = [], []
-for episode in tqdm.tqdm(ds.take(500)):
+for episode in tqdm.tqdm(ds.take(1)):
     for step in episode['steps']:
         actions.append(step['action'].numpy())
         states.append(step['observation']['state'].numpy())
 actions = np.array(actions)
 states = np.array(states)
+print(states)
 action_mean = actions.mean(0)
 state_mean = states.mean(0)
 
@@ -78,5 +80,3 @@ vis_stats(states, state_mean, 'state_stats')
 
 if not render_wandb:
     plt.show()
-
-
