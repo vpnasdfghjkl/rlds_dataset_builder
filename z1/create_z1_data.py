@@ -17,9 +17,8 @@ EPISODE_LENGTH = 10
 
 dataset_dir = os.path.dirname(os.path.abspath(__file__))
 dataset_dir="/home/lab/hanxiao/dataset"
-
+# /home/rebot801/wangwei/数据集/dest
 def create_fake_episode(episodes_dir_list,train=True):
-    
     for episode_dir in episodes_dir_list:
         episode = []
         p=r'dataset_(grab_cube0.*)'
