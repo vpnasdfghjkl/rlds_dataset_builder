@@ -27,6 +27,8 @@ else:
 
 # create TF dataset
 dataset_name = args.dataset_name
+# dataset_name = "kuavo"
+
 print(f"Visualizing data from dataset: {dataset_name}")
 module = importlib.import_module(dataset_name)
 ds = tfds.load(dataset_name, split='train')
@@ -36,8 +38,8 @@ ds = ds.shuffle(100)
 for i, episode in enumerate(ds.take(1)):
     images = []
     for step in episode['steps']:
-        # images.append(step['observation']['image'].numpy())
-        images.append(step['observation']['wrist_image'].numpy())
+        images.append(step['observation']['image'].numpy())
+        # images.append(step['observation']['wrist_image'].numpy())
     image_strip = np.concatenate(images[::4], axis=1)
     caption = step['language_instruction'].numpy().decode() + ' (temp. downsampled 4x)'
 
