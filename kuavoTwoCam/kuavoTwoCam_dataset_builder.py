@@ -40,12 +40,12 @@ class KuavoTwoCam(tfds.core.GeneratorBasedBuilder):
                             encoding_format='png',
                             doc='Main camera RGB observation.',
                         ),
-                        'image02': tfds.features.Image(
-                            shape=(360, 640, 3),
-                            dtype=np.uint8,
-                            encoding_format='png',
-                            doc='Wrist camera RGB observation.',
-                        ),
+                        # 'image02': tfds.features.Image(
+                        #     shape=(360, 640, 3),
+                        #     dtype=np.uint8,
+                        #     encoding_format='png',
+                        #     doc='Wrist camera RGB observation.',
+                        # ),
                         'state': tfds.features.Tensor(
                             shape=(8,),
                             dtype=np.float32,
@@ -99,8 +99,8 @@ class KuavoTwoCam(tfds.core.GeneratorBasedBuilder):
     def _split_generators(self, dl_manager: tfds.download.DownloadManager):
         """Define data splits."""
         return {
-            'train': self._generate_examples(path='/media/smj/新加卷2/octo_demo_dataset/train/episode_*.npy'),
-            'val': self._generate_examples(path='/media/smj/新加卷2/octo_demo_dataset/val/episode_*.npy'),
+            'train': self._generate_examples(path='/media/smj/PortableSSD/data_npy/train/episode_*.npy'),
+            'val': self._generate_examples(path='/media/smj/PortableSSD/data_npy/val/episode_*.npy'),
         }
 
     def _generate_examples(self, path) -> Iterator[Tuple[str, Any]]:
@@ -119,7 +119,7 @@ class KuavoTwoCam(tfds.core.GeneratorBasedBuilder):
                 episode.append({
                     'observation': {
                         'image01': step['image01'],
-                        'image02': step['image02'],
+                        # 'image02': step['image02'],
                         'state': step['state'],
                     },
                     'action': step['action'],
