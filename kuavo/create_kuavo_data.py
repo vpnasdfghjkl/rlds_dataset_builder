@@ -18,6 +18,7 @@ EPISODE_LENGTH = 10
 
 # dataset_dir = os.path.dirname(os.path.abspath(__file__))
 dataset_dir="/home/rebot801/wangwei/dest"
+dataset_dir="/media/smj/PortableSSD/dest"
 files = [os.path.join(dataset_dir, f) for f in os.listdir(dataset_dir)]
 
 print(os.listdir(dataset_dir))
@@ -69,16 +70,21 @@ def create_fake_episode(episodes_dir_list,train=True):
 
         for cam01_rgb_file in cam01_rgb_files:
             cam01_rgb_file = f"{cam01_rgb_dir}/{cam01_rgb_file}"
-            image = Image.open(cam01_rgb_file)
+            image = cv2.imread(cam01_rgb_file)
             image_npy01 = np.array(image)
+            # cv2.imshow("image",image_npy01)
+            # cv2.waitKey(1)
             imgs01.append(image_npy01)
             
-        imgs01_steps = np.array(imgs01)
+        # imgs01_steps = np.array(imgs01)
+        imgs01_steps = np.array(imgs01[0:-1])
         # imgs02_steps = np.array(imgs02[0:-1])
         # joints_steps = np.array(joints[0:-1],dtype="float32")
-        states_steps=np.array(joints,dtype="float32")
-        # action_steps = np.array(joints[1:],dtype="object")
-        action_steps = np.array(commands,dtype="float32")
+
+        # states_steps=np.array(joints,dtype="float32")
+        states_steps=np.array(joints[0:-1],dtype="float32")
+        # action_steps = np.array(commands,dtype="float32")
+        action_steps = np.array(joints[1:],dtype="float32")
         
         # img=np.asarray(np.random.rand(480, 640, 3) * 255, dtype=np.uint8)
         for img01,state,action in zip(imgs01_steps,states_steps,action_steps): 
@@ -95,9 +101,9 @@ def create_fake_episode(episodes_dir_list,train=True):
             np.save(f'{dataset_dir}/data/val/episode_{episode_name}.npy', episode)
 
 episodes_dir_list = sorted([os.path.join(dataset_dir, folder) for folder in os.listdir(dataset_dir) if folder.startswith("1")])
-episodes_dir_list = episodes_dir_list[0:2]
+# episodes_dir_list = episodes_dir_list[0:2]
 random.shuffle(episodes_dir_list)
-t_v_rate=0.5
+t_v_rate=0.8
 
 train_size=int(t_v_rate*len(episodes_dir_list))
 train_episodes_list=episodes_dir_list[:train_size]
@@ -110,14 +116,7 @@ os.makedirs(f'{dataset_dir}/data/val', exist_ok=True)
 
 create_fake_episode(train_episodes_list,train=True)
 create_fake_episode(val_episodes_list,train=False)
-# os.makedirs('data/train')
-# for i in tqdm.tqdm(range(N_TRAIN_EPISODES)):
-# create_fake_episode(f'{dataset_dir}/data/train/episode_{episodes_dir_list[i]}.npy')
 
-# print("Generating val examples...")
-# os.makedirs(f'{dataset_dir}/data/val', exist_ok=True)
-# for i in tqdm.tqdm(range(N_VAL_EPISODES)):
-#     create_fake_episode(f'{dataset_dir}/data/val/episode_{i}.npy')
 
 print('Successfully created example data!')
 
@@ -144,3 +143,8 @@ print('Successfully created example data!')
 # # print(data[0]["wrist_image"])
 # print(data[0]["image"])
 # print(data[0]["state"])
+
+# import numpy as np
+# data=np.load("/media/smj/PortableSSD/dest/data/val/episode_1720275050.7023578_Data.npy",allow_pickle=True)
+
+# print(data[0].keys())

@@ -92,8 +92,8 @@ class Kuavo(tfds.core.GeneratorBasedBuilder):
     def _split_generators(self, dl_manager: tfds.download.DownloadManager):
         """Define data splits."""
         return {
-            'train': self._generate_examples(path='/home/rebot801/wangwei/dest/data/train/episode_*.npy'),
-            'val': self._generate_examples(path='/home/rebot801/wangwei/dest/data/val/episode_*.npy'),
+            'train': self._generate_examples(path='//media/smj/PortableSSD/dest/data/train/episode_*.npy'),
+            'val': self._generate_examples(path='/media/smj/PortableSSD/dest/data/val/episode_*.npy'),
         }
 
     def _generate_examples(self, path) -> Iterator[Tuple[str, Any]]:
