@@ -10,6 +10,9 @@ gcs_utils._is_gcs_disabled = True
 import os
 # os.environ['NO_GCE_CHECK'] = 'true'
 os.environ['CUDA_VISIBLE_DEVICES']="-1"
+'''
+tfds build --data_dir /media/rebot801/P1_LT2/tfds_pure_bg --beam_pipeline_options="direct_running_mode=multi_processing,direct_num_workers=15"
+'''
 class directly_read(tfds.core.GeneratorBasedBuilder):
     """DatasetBuilder for Kuavo dataset."""
 
@@ -102,7 +105,7 @@ class directly_read(tfds.core.GeneratorBasedBuilder):
     def _generate_examples(self, path) -> Iterator[Tuple[str, Any]]:
         """Generator of examples for each split."""
 
-        def _parse_example(episode_path):
+        def _parse_example(episode_path,jump_index):
             # load raw data --> this should change for your dataset
             # data = np.load(episode_path, allow_pickle=True)     # this is a list of dicts in our case
             error_file_path = 'error_dirs.txt'
@@ -146,7 +149,7 @@ class directly_read(tfds.core.GeneratorBasedBuilder):
         
             
             index=np.where(action_steps[:,-1]==1)[0]
-            index=index-8
+            index=index-10
             for i,step in enumerate(action_steps):
                 if i in index:
                     step[-1]=1
@@ -171,7 +174,13 @@ class directly_read(tfds.core.GeneratorBasedBuilder):
                        
             imgs01_steps = np.array(imgs01)
             imgs02_steps = np.array(imgs02)
-            min_len=min(len(imgs01_steps),len(imgs02_steps),len(states_steps),len(action_steps))
+            min_len=0
+            min_length=min(len(imgs01_steps),len(imgs02_steps),len(states_steps),len(action_steps))
+            if min_length>1000:
+                min_len=1000
+            else:
+                min_len=min_length
+
             imgs01_steps = imgs01_steps[:min_len]
             imgs02_steps = imgs02_steps[:min_len]
             states_steps = states_steps[:min_len]
@@ -186,9 +195,11 @@ class directly_read(tfds.core.GeneratorBasedBuilder):
             # plt.plot(aa,label="a")
             # plt.legend()
             # plt.show()
+            data = list(zip(imgs01_steps, imgs02_steps, states_steps, action_steps))
+            grouped_data = data[jump_index::3]
 
-            episode=[]
-            for i, (img01, img02, state, action) in enumerate(zip(imgs01_steps, imgs02_steps, states_steps, action_steps)):
+            episode=[]  
+            for i, (img01, img02, state, action) in enumerate(grouped_data):
                 episode.append({
                     'observation': {
                         'image01': img01,
@@ -201,7 +212,7 @@ class directly_read(tfds.core.GeneratorBasedBuilder):
                     'is_first': i == 0,
                     'is_last': i == (len(action_steps) - 1),
                     'is_terminal': i == (len(action_steps) - 1),
-                    'language_instruction': 'Grab the bottle and put it in the blue box',
+                    'language_instruction': 'Pick up the bottle and place it next to it.',
                     # 'language_embedding': language_embedding,
                 })
                 
@@ -221,7 +232,7 @@ class directly_read(tfds.core.GeneratorBasedBuilder):
         # print("*******************************",episode_paths)
         # valid_name=[]
         # episode_1721044819.5495522_Data.npy
-        import re
+        # import re
         # with open("../valid.txt","r") as f:
         #     valid=f.readlines()
         #     # 提取出1721044819.5495522_Data
@@ -242,8 +253,11 @@ class directly_read(tfds.core.GeneratorBasedBuilder):
         # exit()
         # for smallish datasets, use single-thread parsing
         episode_paths = glob.glob(path)
+        print("here",episode_paths)
+        # episode_paths=[os.path.join("/home/rebot801/LIuXin/Dataset/pure_bg",eps_dir) for eps_dir in os.listdir("/home/rebot801/LIuXin/Dataset/pure_bg")]
         for sample in episode_paths:
-            yield _parse_example(sample)
+            for i in range(3):
+                yield _parse_example(sample,i)
 
         # for large datasets use beam to parallelize data parsing (this will have initialization overhead)
         # beam = tfds.core.lazy_imports.apache_beam
