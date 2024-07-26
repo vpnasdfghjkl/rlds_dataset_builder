@@ -9,11 +9,12 @@ from tensorflow_datasets.core.utils import gcs_utils
 gcs_utils._is_gcs_disabled = True
 import os
 # os.environ['NO_GCE_CHECK'] = 'true'
-os.environ['CUDA_VISIBLE_DEVICES']="-1"
+os.environ['CUDA_VISIBLE_DEVICES']=""
+
 '''
 tfds build --data_dir /media/rebot801/P1_LT2/tfds_pure_bg --beam_pipeline_options="direct_running_mode=multi_processing,direct_num_workers=15"
 '''
-class directly_read(tfds.core.GeneratorBasedBuilder):
+class Jump3_1(tfds.core.GeneratorBasedBuilder):
     """DatasetBuilder for Kuavo dataset."""
 
     VERSION = tfds.core.Version('1.0.0')
@@ -95,7 +96,7 @@ class directly_read(tfds.core.GeneratorBasedBuilder):
 
     def _split_generators(self, dl_manager: tfds.download.DownloadManager):
         """Define data splits."""
-        train_folder="/home/rebot801/LIuXin/Dataset/pure_bg/*_Data"
+        train_folder="/home/rebot801/LIuXin/Dataset/pure_bg2/*_Data"
         # val_folder=""
         return {
             'train': self._generate_examples(path=train_folder),
@@ -176,8 +177,8 @@ class directly_read(tfds.core.GeneratorBasedBuilder):
             imgs02_steps = np.array(imgs02)
             min_len=0
             min_length=min(len(imgs01_steps),len(imgs02_steps),len(states_steps),len(action_steps))
-            if min_length>1000:
-                min_len=1000
+            if min_length>960:
+                min_len=960
             else:
                 min_len=min_length
 
@@ -208,10 +209,10 @@ class directly_read(tfds.core.GeneratorBasedBuilder):
                     },
                     'action': action,
                     'discount': 1.0,
-                    'reward': float(i == (len(action_steps) - 1)),
+                    'reward': float(i == (len(grouped_data) - 1)),
                     'is_first': i == 0,
-                    'is_last': i == (len(action_steps) - 1),
-                    'is_terminal': i == (len(action_steps) - 1),
+                    'is_last': i == (len(grouped_data) - 1),
+                    'is_terminal': i == (len(grouped_data) - 1),
                     'language_instruction': 'Pick up the bottle and place it next to it.',
                     # 'language_embedding': language_embedding,
                 })
@@ -223,9 +224,10 @@ class directly_read(tfds.core.GeneratorBasedBuilder):
                     'file_path': episode_path
                 }
             }
-
+            yield_id=episode_path+"_"+str(jump_index)
+            print(yield_id)
             # if you want to skip an example for whatever reason, simply return None
-            return episode_path, sample
+            return yield_id, sample
 
         # create list of all examples
         # episode_paths = glob.glob(path)[33:83]
@@ -255,14 +257,14 @@ class directly_read(tfds.core.GeneratorBasedBuilder):
         episode_paths = glob.glob(path)
         print("here",episode_paths)
         # episode_paths=[os.path.join("/home/rebot801/LIuXin/Dataset/pure_bg",eps_dir) for eps_dir in os.listdir("/home/rebot801/LIuXin/Dataset/pure_bg")]
-        for sample in episode_paths:
+        for sample in episode_paths[:1]:
             for i in range(3):
                 yield _parse_example(sample,i)
-
+    
         # for large datasets use beam to parallelize data parsing (this will have initialization overhead)
-        # beam = tfds.core.lazy_imports.apache_beam
-        # return (
-        #         beam.Create(episode_paths)
-        #         | beam.Map(_parse_example)
-        # )
+        beam = tfds.core.lazy_imports.apache_beam
+        return (
+                beam.Create(episode_paths)
+                | beam.Map(_parse_example)
+        )
 

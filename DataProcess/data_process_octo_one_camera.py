@@ -35,7 +35,7 @@ def scan_files_in_folder(folder_path):       # 获取指定目录下的所有文
 
 if __name__ == '__main__':
     results = []
-    source_dir = '/home/rebot801/LIuXin/Dataset/pure_bg'
+    source_dir = '/home/rebot801/LIuXin/Dataset/pure_bg2'   
     dir_list = read_dataset(source_dir)
     for dir in tqdm(dir_list, desc="Processing directories"):
         j = 0
