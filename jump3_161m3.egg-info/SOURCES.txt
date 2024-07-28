@@ -1,0 +1,12 @@
+LICENSE
+README.md
+setup.py
+jump3_161m3/__init__.py
+jump3_161m3/check.py
+jump3_161m3/create_kuavoTwoCam_data.py
+jump3_161m3/create_standard_data.py
+jump3_161m3/jump3_161m3_dataset_builder.py
+jump3_161m3.egg-info/PKG-INFO
+jump3_161m3.egg-info/SOURCES.txt
+jump3_161m3.egg-info/dependency_links.txt
+jump3_161m3.egg-info/top_level.txt
