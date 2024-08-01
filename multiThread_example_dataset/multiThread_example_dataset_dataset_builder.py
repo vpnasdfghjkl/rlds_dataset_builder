@@ -61,7 +61,7 @@ def _generate_examples(paths) -> Iterator[Tuple[str, Any]]:
         
             
             index=np.where(action_steps[:,-1]==1)[0]
-            index=index-10
+            index=index-6
             for i,step in enumerate(action_steps):
                 if i in index:
                     step[-1]=1
@@ -78,15 +78,15 @@ def _generate_examples(paths) -> Iterator[Tuple[str, Any]]:
                 cam02_rgb_file = f"{cam02_rgb_dir}/{cam02_rgb_file}"
                 image01 = Image.open(cam01_rgb_file)
                 image02 = Image.open(cam02_rgb_file)
-                width, height = 256, 256
-                image01 = image01.resize((width, height))  
-                image02 = image02.resize((128, 128))  
+                # width, height = 256, 256
+                # image01 = image01.resize((width, height))  
+                # image02 = image02.resize((128, 128))  
 
                 image_npy01 = np.array(image01)
                 image_npy02 = np.array(image02)
                 imgs01.append(image_npy01)
                 imgs02.append(image_npy02)
-               
+            
                        
             imgs01_steps = np.array(imgs01)
             imgs02_steps = np.array(imgs02)
@@ -103,7 +103,7 @@ def _generate_examples(paths) -> Iterator[Tuple[str, Any]]:
             action_steps = action_steps[:min_len]
 
             data = list(zip(imgs01_steps, imgs02_steps, states_steps, action_steps))
-            grouped_data = data[jump_index::6]
+            grouped_data = data[jump_index::1]
 
             episode=[]  
             for i, (img01, img02, state, action) in enumerate(grouped_data):
@@ -137,12 +137,18 @@ def _generate_examples(paths) -> Iterator[Tuple[str, Any]]:
             return yield_id, sample
 
     # for smallish datasets, use single-thread parsing
-    for sample in paths:
-            for i in range(6):
-                yield _parse_example(sample,i)
+    # use trange for a progress bar
+    from tqdm import trange
+    for sample in trange(paths):
+    # for sample in paths:
+            # for i in range(1):
+        import random
+        random_number = random.randint(0,2)
+        # print(random_number)
+        yield _parse_example(sample,random_number)
 
 
-class jump6_test(MultiThreadedDatasetBuilder):
+class jump0_60hz_2cam_noResize(MultiThreadedDatasetBuilder):
     """DatasetBuilder for example dataset."""
 
     VERSION = tfds.core.Version('1.0.0')
@@ -161,15 +167,17 @@ class jump6_test(MultiThreadedDatasetBuilder):
             features=tfds.features.FeaturesDict({
                 'steps': tfds.features.Dataset({
                     'observation': tfds.features.FeaturesDict({
+                        # MODIFY
                         'image01': tfds.features.Image(
-                            # shape=(360, 640, 3),
-                            shape=(256, 256, 3),
+                            shape=(360, 640, 3),
+                            # shape=(256, 256, 3),
                             dtype=np.uint8,
                             encoding_format='png',
                             doc='Chest camera RGB observation.',
                         ),
+                        # MODIFY
                         'image02': tfds.features.Image(
-                            shape=(128, 128, 3),
+                            shape=(360, 640, 3),
                             dtype=np.uint8,
                             encoding_format='png',
                             doc='Third camera RGB observation.',
@@ -226,6 +234,7 @@ class jump6_test(MultiThreadedDatasetBuilder):
 
     def _split_paths(self):
         """Define data splits."""
+        # MODIFY
         train_folder=glob.glob("/home/octo/hx/dataset/raw/pure_bg2/*_Data")
         # val_folder=""
         return {
