@@ -3,4 +3,3 @@ wandb
 __pycache__
 .idea
 multiThread_example_dataset_rosbag2/WRC_juice2_bag_picture
-multiThread_example_dataset_rosbag2/WRC_juice_bag_picture
