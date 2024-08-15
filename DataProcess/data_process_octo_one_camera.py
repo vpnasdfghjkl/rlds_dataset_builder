@@ -35,7 +35,7 @@ def scan_files_in_folder(folder_path):       # 获取指定目录下的所有文
 
 if __name__ == '__main__':
     results = []
-    source_dir = '/home/rebot801/LIuXin/Dataset/pure_bg2'   
+    source_dir = '/home/octo/hx/dataset/raw/pure_bg2'   
     dir_list = read_dataset(source_dir)
     for dir in tqdm(dir_list, desc="Processing directories"):
         j = 0
@@ -67,7 +67,20 @@ if __name__ == '__main__':
         camera1_dir_path = os.path.join(source_dir, dir, 'camera1')
         my_camera1_name = scan_files_in_folder_cam(camera1_dir_path)
 
-        for _ in trange(len(my_camera1_name)-50, desc="Processing directories"):
+        camera2_dir_path = os.path.join(source_dir, dir, 'camera2')
+        my_camera2_name = scan_files_in_folder_cam(camera2_dir_path)
+
+        line_count = 0
+        with open(state_join, 'r') as file:
+            lines = file.readlines()
+            line_count = len(lines)
+        with open(command_path, 'r') as file:
+            lines = file.readlines()
+            line_count = len(lines) if len(lines) < line_count else line_count
+
+        min_len=min(len(my_camera1_name),len(my_camera2_name),line_count)
+
+        for _ in trange(min_len-5, desc="Processing directories"):
             j = j + 1
             command_str = command_file.read_next_line()
             state_str = state_file.read_next_line()

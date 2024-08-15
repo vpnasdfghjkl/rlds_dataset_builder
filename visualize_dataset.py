@@ -14,7 +14,7 @@ WANDB_PROJECT = 'vis_rlds'
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('dataset_name', help='name of the dataset to visualize')
+# parser.add_argument('dataset_name', help='name of the dataset to visualize')
 args = parser.parse_args()
 
 if WANDB_ENTITY is not None:
@@ -26,19 +26,21 @@ else:
 
 
 # create TF dataset
-dataset_name = args.dataset_name
-# dataset_name = "kuavo"
+# dataset_name = args.dataset_name
+dataset_name = "jump0_60hz"
 
 print(f"Visualizing data from dataset: {dataset_name}")
-module = importlib.import_module(dataset_name)
-ds = tfds.load(dataset_name, split='train')
+# module = importlib.import_module(dataset_name)
+# ds = tfds.load("/home/octo/hx/dataset/rlds/tfds_pure_bg2/jump0_60hz/1.0.0", split='train')
+builder = tfds.builder_from_directory(builder_dir="/home/octo/hx/dataset/rlds/tfds_pure_bg2/jump0_60hz/1.0.0")
+ds = builder.as_dataset(split='train[0:20]')
 ds = ds.shuffle(100)
 
 # visualize episodes
 for i, episode in enumerate(ds.take(1)):
     images = []
     for step in episode['steps']:
-        images.append(step['observation']['image'].numpy())
+        images.append(step['observation']['image01'].numpy())
         # images.append(step['observation']['wrist_image'].numpy())
     image_strip = np.concatenate(images[::4], axis=1)
     caption = step['language_instruction'].numpy().decode() + ' (temp. downsampled 4x)'
