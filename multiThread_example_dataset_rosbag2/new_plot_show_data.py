@@ -8,6 +8,7 @@ from sensor_msgs.msg import CompressedImage
 import shutil
 
 from scipy.spatial.transform import Rotation as R
+import glob
 # bridge = CvBridge()
 
 # 创建一个 VideoWriter 对象
@@ -20,9 +21,8 @@ video_writer = cv2.VideoWriter(output_video, fourcc, frame_rate, img_size)
 CAM_HZ=30
 TRAIN_HZ=10
 TASK_TIME=1000
-CHECK_PIC_SAVE_FOLDER="WRC_juice2_bag_picture"
 
-def check_folder():
+def check_folder(CHECK_PIC_SAVE_FOLDER):
     if not os.path.exists(CHECK_PIC_SAVE_FOLDER):
         os.makedirs(CHECK_PIC_SAVE_FOLDER)
     else:
@@ -30,13 +30,7 @@ def check_folder():
         shutil.rmtree(CHECK_PIC_SAVE_FOLDER)
         os.makedirs(CHECK_PIC_SAVE_FOLDER)
 
-    last_pic_folder = os.path.join(CHECK_PIC_SAVE_FOLDER, "last_pic")
-    if not os.path.exists(last_pic_folder):
-        os.makedirs(last_pic_folder)
-    else:
-        # 清空文件夹中的文件
-        shutil.rmtree(last_pic_folder)
-        os.makedirs(last_pic_folder)
+   
 
 def use_rosbag_to_show(bag_name):
 
@@ -231,15 +225,15 @@ def use_rosbag_to_show(bag_name):
     
     print("after delete firet frame==============>:")
     print(len(img),len(aligned_state_eef_pose),len(aligned_state_joint),len(aligned_cmd_joint),len(aligned_delta_cmd_eef_pose),len(aligned_cmd_eef_pose))
-    import matplotlib
-    matplotlib.use('Agg')
+    # import matplotlib
+    # matplotlib.use('Agg')
     # 创建3行5列的图表并进行比较
     num_plots = min(len(aligned_cmd_eef_pose[0]), len(aligned_state_eef_pose[0]), 15)  # 限制最多只显示15个数据对比
-    fig, axs = plt.subplots(3, 5, figsize=(16, 9))
+    fig, axs = plt.subplots(3, 5, figsize=(32, 18))
     fig.suptitle(base_name, fontsize=16)
     for i in range(num_plots):
         kuavo_position = [data[i] for data in aligned_cmd_joint]
-        # robot_q = [data[i] for data in aligned_state_joint]
+        robot_q = [data[i] for data in aligned_state_joint]
 
         cmd_eef=[data[i] for data in aligned_cmd_eef_pose]
         state_eef=[data[i] for data in aligned_state_eef_pose]
@@ -263,13 +257,15 @@ def use_rosbag_to_show(bag_name):
           "\n img shape:",img[exampl_index].shape)   
 
     plt.tight_layout()
+    
+    
 
     # 保存图片
-    save_path = f"./WRC_juice2_bag_picture/{base_name}.png"
+    save_path = f"{save_plt_folder}/{base_name}.png"
     plt.savefig(save_path)
 
     # 保存最后一张img
-    cv2.imwrite(f"./{CHECK_PIC_SAVE_FOLDER}/last_pic/last_img.png",img[-1])
+    cv2.imwrite(f"{save_lastPic_folder}/{base_name}.png",img[-1])
     # # 显示图片
     # plt.show()
     assert len(img)==len(aligned_state_eef_pose)==len(aligned_delta_cmd_eef_pose)==len(aligned_cmd_eef_pose)==len(aligned_state_joint)==len(aligned_cmd_joint)
@@ -278,11 +274,14 @@ def use_rosbag_to_show(bag_name):
     return img,aligned_state_eef_pose,aligned_delta_cmd_eef_pose,aligned_cmd_eef_pose,aligned_state_joint,aligned_cmd_joint
 
 if __name__ == "__main__":
-    # use_rosbag_to_show('./rgb_60hz_bag_file/2024-04-26-17-59-42.bag')
-    check_folder()
-    import glob
-    bagpath=glob.glob("/home/octo/hx/dataset/raw/rosbag_WRC_juice/pick_up_something*.bag")
-    bagpath=sorted(bagpath)[30:35]
+    bag_folder_name="2024-9-7"
+    bag_folder_path="/IL/rlds_dataset_builder/multiThread_example_dataset_rosbag2/bag/"+bag_folder_name
+    
+    save_plt_folder = f"{bag_folder_path}/plt"
+    save_lastPic_folder=f"{bag_folder_path}/last_pic"
+    check_folder(save_plt_folder)
+    check_folder(save_lastPic_folder)
+    bagpath=glob.glob(f"{bag_folder_path}/*.bag")
     print(len(bagpath))
     for path in bagpath:
         print("current path",path)

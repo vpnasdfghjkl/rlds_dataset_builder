@@ -48,9 +48,12 @@ import shutil
 CAM_HZ=30
 TRAIN_HZ=10
 TASK_TIME=1000
-CHECK_PIC_SAVE_FOLDER="WRC_juice2_bag_picture"
+bag_folder_name="2024-9-7"
+bag_folder_path="/IL/rlds_dataset_builder/multiThread_example_dataset_rosbag2/bag/"+bag_folder_name
+save_plt_folder = f"{bag_folder_path}/plt"
+save_lastPic_folder=f"{bag_folder_path}/last_pic"
 
-def check_folder():
+def check_folder(CHECK_PIC_SAVE_FOLDER):
     if not os.path.exists(CHECK_PIC_SAVE_FOLDER):
         os.makedirs(CHECK_PIC_SAVE_FOLDER)
     else:
@@ -58,14 +61,6 @@ def check_folder():
         shutil.rmtree(CHECK_PIC_SAVE_FOLDER)
         os.makedirs(CHECK_PIC_SAVE_FOLDER)
 
-    last_pic_folder = os.path.join(CHECK_PIC_SAVE_FOLDER, "last_pic")
-    if not os.path.exists(last_pic_folder):
-        os.makedirs(last_pic_folder)
-    else:
-        # 清空文件夹中的文件
-        shutil.rmtree(last_pic_folder)
-        os.makedirs(last_pic_folder)
-check_folder()
 def use_rosbag_to_show(bag_name):
     # bridge = CvBridge()
     base_name = os.path.splitext(os.path.basename(bag_name))[0]
@@ -292,9 +287,11 @@ def use_rosbag_to_show(bag_name):
     plt.tight_layout()
 
     # 保存图片
-    save_path = f"./{CHECK_PIC_SAVE_FOLDER}/{base_name}.png"
+    save_path = f"{save_plt_folder}/{base_name}.png"
     plt.savefig(save_path)
-    cv2.imwrite(f"./{CHECK_PIC_SAVE_FOLDER}/last_pic/last_img.png",img[-1])
+
+    # 保存最后一张img
+    cv2.imwrite(f"{save_lastPic_folder}/{base_name}.png",img[-1])
     # # 显示图片
     # plt.show()
     assert len(img)==len(aligned_state_eef_pose)==len(aligned_delta_cmd_eef_pose)==len(aligned_cmd_eef_pose)==len(aligned_state_joint)==len(aligned_cmd_joint)
@@ -440,13 +437,14 @@ class rosbag_WRC_juice2(MultiThreadedDatasetBuilder):
     def _split_paths(self):
         """Define data splits."""
         # MODIFY
-
-        # train_folder=glob.glob("/home/octo/hx/dataset/raw/pure_bg2/*_Data")
-        train_folder=glob.glob("/home/octo/hx/dataset/raw/rosbag_WRC_juice2/pick_up_something*.bag")
-        train_folder=train_folder
-        val_folder=glob.glob("/home/octo/hx/dataset/raw/rosbag_WRC_juice2/val/pick_up_something*.bag")
-        print(train_folder)
+        
+        check_folder(save_plt_folder)
+        check_folder(save_lastPic_folder)
+        train_folder=glob.glob(f"{bag_folder_path}/*.bag")
+        # train_folder=train_folder
+        # val_folder=glob.glob("/home/octo/hx/dataset/raw/rosbag_WRC_juice2/val/pick_up_something*.bag")
+        # print(train_folder)
         return {
             'train': train_folder,
-            'val': val_folder,
+            # 'val': val_folder,
         }
