@@ -9,6 +9,7 @@ import shutil
 
 from scipy.spatial.transform import Rotation as R
 import glob
+import math
 # bridge = CvBridge()
 
 # 创建一个 VideoWriter 对象
@@ -30,7 +31,17 @@ def check_folder(CHECK_PIC_SAVE_FOLDER):
         shutil.rmtree(CHECK_PIC_SAVE_FOLDER)
         os.makedirs(CHECK_PIC_SAVE_FOLDER)
 
-   
+def adjust_pose_rpy(pose):
+    threshold=3
+    pre_eef = pose[0][3:6]  
+    for i in range(len(pose)):
+        for j in range(3): 
+            diff = pose[i][3+j] - pre_eef[j]
+            if diff > threshold:
+                pose[i][3+j] -= 2 * math.pi
+            elif diff < -threshold:
+                pose[i][3+j] += 2 * math.pi
+            pre_eef[j] = pose[i][3+j]
 
 def use_rosbag_to_show(bag_name):
 
@@ -141,6 +152,9 @@ def use_rosbag_to_show(bag_name):
     # state_eef_pose_time_stamp=state_joint_time_stamp.copy()
 
     bag.close()
+    import math
+    adjust_pose_rpy(cmd_eef_pose)
+    adjust_pose_rpy(state_eef_pose)
 
     # 安全判断
     if len(cmd_joint) == 0 or len(state_joint) == 0:
@@ -274,7 +288,7 @@ def use_rosbag_to_show(bag_name):
     return img,aligned_state_eef_pose,aligned_delta_cmd_eef_pose,aligned_cmd_eef_pose,aligned_state_joint,aligned_cmd_joint
 
 if __name__ == "__main__":
-    bag_folder_name="2024-9-7"
+    bag_folder_name="2024-9-9"
     bag_folder_path="/IL/rlds_dataset_builder/multiThread_example_dataset_rosbag2/bag/"+bag_folder_name
     
     save_plt_folder = f"{bag_folder_path}/plt"
