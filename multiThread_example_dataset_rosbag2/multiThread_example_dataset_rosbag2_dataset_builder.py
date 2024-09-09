@@ -33,6 +33,7 @@ import scipy.spatial.transform as st
 from sensor_msgs.msg import CompressedImage
 from scipy.spatial.transform import Rotation as R
 import shutil
+import math
 # bridge = CvBridge()
 
 # # 创建一个 VideoWriter 对象
@@ -60,6 +61,17 @@ def check_folder(CHECK_PIC_SAVE_FOLDER):
         # 清空文件夹中的所有内容
         shutil.rmtree(CHECK_PIC_SAVE_FOLDER)
         os.makedirs(CHECK_PIC_SAVE_FOLDER)
+def adjust_pose_rpy(pose):
+    threshold=3
+    pre_eef = pose[0][3:6]  
+    for i in range(len(pose)):
+        for j in range(3): 
+            diff = pose[i][3+j] - pre_eef[j]
+            if diff > threshold:
+                pose[i][3+j] -= 2 * math.pi
+            elif diff < -threshold:
+                pose[i][3+j] += 2 * math.pi
+            pre_eef[j] = pose[i][3+j]
 
 def use_rosbag_to_show(bag_name):
     # bridge = CvBridge()
@@ -170,7 +182,8 @@ def use_rosbag_to_show(bag_name):
     # state_eef_pose_time_stamp=state_joint_time_stamp.copy()
 
     bag.close()
-
+    adjust_pose_rpy(cmd_eef_pose)
+    adjust_pose_rpy(state_eef_pose)
     # 安全判断
     if len(cmd_joint) == 0 or len(state_joint) == 0:
         print("ROS bag file contains empty data for at least one topic.")
