@@ -32,7 +32,7 @@ def check_folder(CHECK_PIC_SAVE_FOLDER):
         os.makedirs(CHECK_PIC_SAVE_FOLDER)
 
 def adjust_pose_rpy(pose):
-    threshold=3
+    threshold= math.pi
     pre_eef = pose[0][3:6]  
     for i in range(len(pose)):
         for j in range(3): 
@@ -42,9 +42,43 @@ def adjust_pose_rpy(pose):
             elif diff < -threshold:
                 pose[i][3+j] += 2 * math.pi
             pre_eef[j] = pose[i][3+j]
+    return pose
 
+def plot_euler_error(cmd_rot_matrix,state_rot_matrix,base_name):
+    euler_error = []
+
+    for (c_m,s_m) in zip(cmd_rot_matrix,state_rot_matrix):
+        delta_rot_matrix = np.dot(c_m, s_m.T)
+        euler_error.append(R.from_matrix(delta_rot_matrix).as_euler('xyz'))
+    # plot euler_error
+    euler_error = np.array(euler_error[300:])
+    fig, axs = plt.subplots(3, 1, figsize=(32, 18))
+    fig.suptitle(base_name, fontsize=16)
+    for i in range(3):
+        axs[i].plot(euler_error[:, i], label=f'error_{i}')
+        axs[i].set_title(f"error_{i}")
+        axs[i].legend()
+    plt.tight_layout()
+    save_path = f"{save_plt_folder}/{base_name}_euler_error.png"
+    plt.savefig(save_path)
+def plot_euler_error_direct(cmd_eef_pose,state_eef_pose,base_name):
+    # plot euler_error_direct
+    euler_error_direct=[]
+    for (c_e,s_e) in zip(cmd_eef_pose,state_eef_pose):
+        delta_euler = c_e[3:6] - s_e[3:6]
+        euler_error_direct.append(delta_euler)
+    euler_error_direct = np.array(euler_error_direct[300:])
+    fig, axs = plt.subplots(3, 1, figsize=(32, 18))
+    fig.suptitle(base_name, fontsize=16)
+    for i in range(3):
+        axs[i].plot(euler_error_direct[:, i], label=f'error_direct_{i}')
+        axs[i].set_title(f"error_direct_{i}")
+        axs[i].legend()
+    plt.tight_layout()
+    save_path = f"{save_plt_folder}/{base_name}_euler_error_direct.png"
+    plt.savefig(save_path)
+    
 def use_rosbag_to_show(bag_name):
-
     base_name = os.path.splitext(os.path.basename(bag_name))[0]
     # 读取rosbag文件并提取所需数据
     bag = rosbag.Bag(bag_name, 'r')
@@ -69,6 +103,10 @@ def use_rosbag_to_show(bag_name):
 
     img=[]
     img_stamp=[]
+    
+    cmd_rot_matrix = []
+    state_rot_matrix = []
+    delta_rot_matrix =[]
     
     for topic, msg, t in bag.read_messages(topics=[ '/kuavo_arm_traj',\
                                                     '/robot_arm_q_v_tau',\
@@ -98,6 +136,7 @@ def use_rosbag_to_show(bag_name):
             xyz=np.array(msg.left_pose.pos_xyz)
             xyzw=np.array(msg.left_pose.quat_xyzw)
             rotation = R.from_quat(xyzw)
+            cmd_rot_matrix.append(rotation.as_matrix())  
             # 转换为欧拉角 (默认是 'xyz' 顺序，单位是弧度)
             euler_angles = rotation.as_euler('xyz')
             xyzrpy=np.concatenate((xyz,euler_angles))
@@ -108,6 +147,7 @@ def use_rosbag_to_show(bag_name):
             xyz=np.array(msg.left_pose.pos_xyz)
             xyzw=np.array(msg.left_pose.quat_xyzw)
             rotation = R.from_quat(xyzw)
+            state_rot_matrix.append(rotation.as_matrix())  
             # 转换为欧拉角 (默认是 'xyz' 顺序，单位是弧度)
             euler_angles = rotation.as_euler('xyz')
             xyzrpy=np.concatenate((xyz,euler_angles))
@@ -148,14 +188,13 @@ def use_rosbag_to_show(bag_name):
             # cv2.imshow("s",cv_img)
             # cv2.waitKey(1)
 
-    # cmd_eef_pose_time_stamp=cmd_joint_time_stamp.copy()
-    # state_eef_pose_time_stamp=state_joint_time_stamp.copy()
-
     bag.close()
-    import math
-    adjust_pose_rpy(cmd_eef_pose)
-    adjust_pose_rpy(state_eef_pose)
+    cmd_eef_pose=adjust_pose_rpy(cmd_eef_pose)
+    state_eef_pose=adjust_pose_rpy(state_eef_pose)
 
+    plot_euler_error(cmd_rot_matrix,state_rot_matrix,base_name)
+    plot_euler_error_direct(cmd_eef_pose,state_eef_pose,base_name)
+    
     # 安全判断
     if len(cmd_joint) == 0 or len(state_joint) == 0:
         print("ROS bag file contains empty data for at least one topic.")
@@ -239,6 +278,8 @@ def use_rosbag_to_show(bag_name):
     
     print("after delete firet frame==============>:")
     print(len(img),len(aligned_state_eef_pose),len(aligned_state_joint),len(aligned_cmd_joint),len(aligned_delta_cmd_eef_pose),len(aligned_cmd_eef_pose))
+
+
     # import matplotlib
     # matplotlib.use('Agg')
     # 创建3行5列的图表并进行比较
@@ -281,7 +322,7 @@ def use_rosbag_to_show(bag_name):
     # 保存最后一张img
     cv2.imwrite(f"{save_lastPic_folder}/{base_name}.png",img[-1])
     # # 显示图片
-    # plt.show()
+    plt.show()
     assert len(img)==len(aligned_state_eef_pose)==len(aligned_delta_cmd_eef_pose)==len(aligned_cmd_eef_pose)==len(aligned_state_joint)==len(aligned_cmd_joint)
     print("all length==============>:img,aligned_state_eef_pose,aligned_delta_cmd_eef_pose,aligned_cmd_eef_pose,aligned_state_joint,aligned_cmd_joint")
     print(len(img),len(aligned_state_eef_pose),len(aligned_delta_cmd_eef_pose),len(aligned_cmd_eef_pose),len(aligned_state_joint),len(aligned_cmd_joint))   
